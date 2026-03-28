@@ -38,8 +38,8 @@ const response = await axios.post('/api/razorpay/create-order', {
 tier: tier,
 amount: tierData.price * 100,
 currency: 'INR',
-email: document.querySelector('input[type="email"]')?.value || '',
-name: document.querySelector('input[name="name"]')?.value || 'Customer'
+email: (document.querySelector('input[type="email"]') as HTMLInputElement)?.value || '',
+name: (document.querySelector('input[name="name"]') as HTMLInputElement)?.value || 'Customer'
 });
 
 const { orderId, keyId } = response.data;
