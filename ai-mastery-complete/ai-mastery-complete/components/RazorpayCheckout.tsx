@@ -58,7 +58,7 @@ razorpay_order_id: response.razorpay_order_id,
 razorpay_payment_id: response.razorpay_payment_id,
 razorpay_signature: response.razorpay_signature,
 tier: tier,
-email: document.querySelector('input[type="email"]')?.value
+email: (document.querySelector('input[type="email"]') as HTMLInputElement)?.value
 });
 
 if (verifyResponse.data.success) {
