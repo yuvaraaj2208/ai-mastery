@@ -115,7 +115,7 @@ html: `
 <p>Thank you for subscribing to <strong>AI Mastery ${tier.toUpperCase()}</strong>!</p>
 <p><strong>Payment Details:</strong></p>
 <ul>
-<li>Amount: ₹${payment.amount / 100}</li>
+<li>Amount: ₹${Number(payment.amount) / 100}</li>
 <li>Payment ID: ${razorpay_payment_id}</li>
 <li>Status: Completed</li>
 </ul>
