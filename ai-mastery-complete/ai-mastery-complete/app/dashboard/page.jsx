@@ -51,7 +51,7 @@ export default function DashboardPage() {
             {['tips', 'prompts', 'templates'].map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab as any)}
+                onClick={() => setActiveTab(tab )}
                 className={`pb-4 font-semibold transition border-b-2 ${
                   activeTab === tab
                     ? 'text-cyan border-cyan'
