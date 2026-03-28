@@ -80,7 +80,7 @@ color: '#3b82f6'
 }
 };
 
-const Razorpay = window.Razorpay;
+const Razorpay = (window as any).Razorpay;
 if (!Razorpay) {
 setError('Razorpay is not loaded. Please refresh the page.');
 return;
