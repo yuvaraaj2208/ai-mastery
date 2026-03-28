@@ -71,9 +71,9 @@ setError('Payment verification failed: ' + (err.response?.data?.message || err.m
 }
 },
 prefill: {
-name: document.querySelector('input[name="name"]')?.value || '',
-email: document.querySelector('input[type="email"]')?.value || '',
-contact: document.querySelector('input[type="tel"]')?.value || ''
+name: (document.querySelector('input[name="name"]') as HTMLInputElement)?.value || '',
+email: (document.querySelector('input[type="email"]') as HTMLInputElement)?.value || '',
+contact: (document.querySelector('input[type="tel"]') as HTMLInputElement)?.value || ''
 },
 theme: {
 color: '#3b82f6'
