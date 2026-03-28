@@ -1,7 +1,7 @@
-import type { Metadata } from 'next'
+import { Metadata } from 'next'
 import './globals.css'
 
-export const metadata: Metadata = {
+export const metadata = {
   title: 'AI Mastery | Learn AI, Make Money, Stay Ahead',
   description: 'Join 10,000+ members learning to leverage AI for income.',
 }
