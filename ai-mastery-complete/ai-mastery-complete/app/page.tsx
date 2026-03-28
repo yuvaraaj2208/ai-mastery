@@ -63,9 +63,12 @@ export default function LandingPage() {
           <Link href="/signup" className="bg-cyan hover:bg-cyan-dark text-dark px-8 py-3 rounded-lg font-semibold transition">
             Start Free Trial
           </Link>
-          <button className="border-2 border-cyan text-cyan hover:bg-cyan/10 px-8 py-3 rounded-lg font-semibold transition">
-            Watch Demo
-          </button>
+          <button 
+  onClick={() => alert('Demo coming soon! Start your free trial to access all 100+ AI tips, 500+ prompts, and more.')}
+  className="border-2 border-cyan text-cyan hover:bg-cyan/10 px-8 py-3 rounded-lg font-semibold transition"
+>
+  Watch Demo
+</button>
         </div>
         <p className="text-gray-500 mt-6">No credit card required • 30-day money-back guarantee</p>
       </section>
@@ -89,13 +92,13 @@ export default function LandingPage() {
               <div className="mb-6">
                 <div className="text-5xl font-bold mb-2">${tier.price}<span className="text-lg text-gray-400">/month</span></div>
               </div>
-              <button className={`w-full py-3 rounded-lg font-semibold mb-8 transition ${
-                tier.highlighted
-                  ? 'bg-cyan text-dark hover:bg-cyan-dark'
-                  : 'bg-purple hover:bg-purple-dark'
-              }`}>
-                Start Free Trial
-              </button>
+              <Link href="/signup" className={`w-full py-3 rounded-lg font-semibold mb-8 transition block text-center ${
+  tier.highlighted
+    ? 'bg-cyan text-dark hover:bg-cyan-dark'
+    : 'bg-purple hover:bg-purple-dark'
+}`}>
+  Start Free Trial
+</Link>
               <div className="space-y-4">
                 {tier.features.map((feature, idx) => (
                   <div key={idx} className="flex gap-3">
