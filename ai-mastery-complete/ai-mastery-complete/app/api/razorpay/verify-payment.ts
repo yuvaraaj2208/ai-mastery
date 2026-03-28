@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import Razorpay from 'razorpay';
 import { createClient } from '@supabase/supabase-js';
 import mailgun from 'mailgun.js';
+import formData from 'form-data';
 
 const supabase = createClient(
 process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -13,10 +14,10 @@ const razorpay = new Razorpay({
 key_id: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
 key_secret: process.env.RAZORPAY_KEY_SECRET
 });
-
-const mg = mailgun.client({
-username: 'api',
-key: process.env.MAILGUN_API_KEY
+const mg = new mailgun(formData);
+const client = mg.client({
+  username: 'api',
+  key: process.env.MAILGUN_API_KEY
 });
 
 export default async function handler(req, res) {
