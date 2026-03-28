@@ -17,7 +17,7 @@ key_secret: process.env.RAZORPAY_KEY_SECRET
 const mg = new mailgun(formData);
 const client = mg.client({
   username: 'api',
-  key: process.env.MAILGUN_API_KEY
+  key: process.env.MAILGUN_API_KEY || ''
 });
 
 export default async function handler(req, res) {
@@ -105,7 +105,7 @@ auto_renew: true
 });
 
 try {
-await mg.messages.create(process.env.MAILGUN_DOMAIN, {
+await client.messages.create(process.env.MAILGUN_DOMAIN, {
 from: process.env.MAILGUN_FROM_EMAIL,
 to: email,
 subject: `Welcome to AI Mastery ${tier.toUpperCase()} - Payment Confirmed!`,
