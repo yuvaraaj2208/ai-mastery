@@ -89,9 +89,20 @@ export default function SignupPage() {
               </div>
 
               <div className="space-y-4 pt-4">
-                <button className="w-full bg-cyan hover:bg-cyan-dark text-dark py-2 rounded-lg font-semibold transition">
-                  Continue to Payment
-                </button>
+<button 
+  onClick={() => {
+    if (!formData.email || !formData.password || !formData.fullName) {
+      alert('Please fill in all fields');
+      return;
+    }
+    // For now, just show success message
+    // Later: integrate with Razorpay checkout
+    alert(`Welcome ${formData.fullName}! Payment page coming soon.`);
+  }}
+  className="w-full bg-cyan hover:bg-cyan-dark text-dark py-2 rounded-lg font-semibold transition"
+>
+  Continue to Payment
+</button>
                 <button
                   onClick={() => setStep('tier-select')}
                   className="w-full bg-darker border border-purple/30 hover:border-cyan py-2 rounded-lg font-semibold transition"
