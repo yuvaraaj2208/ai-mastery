@@ -35,7 +35,7 @@ export default function SignupPage() {
                 <button
                   key={tier.id}
                   onClick={() => {
-                    setSelectedTier(tier.id )
+                    setSelectedTier(tier.id as 'basic' | 'pro' | 'vip')
                     setStep('details')
                   }}
                   className="w-full text-left p-4 border-2 border-purple/30 rounded-lg hover:border-cyan hover:bg-cyan/5 transition"
