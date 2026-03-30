@@ -4,80 +4,113 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState<'tips' | 'prompts' | 'templates'>('tips')
+  const [activeTab, setActiveTab] = useState<'library' | 'courses' | 'community'>('library')
 
-  const tips = [
-    { id: 1, title: 'How to Make $1000/Month with ChatGPT', category: 'Income', readTime: 5 },
-    { id: 2, title: 'Advanced Prompt Engineering', category: 'Prompts', readTime: 8 },
-    { id: 3, title: 'AI Tools Comparison', category: 'Tools', readTime: 6 },
+  const contentCategories = [
+    { name: 'Tips', icon: '📄', count: '100+' },
+    { name: 'Prompts', icon: '📋', count: '500+' },
+    { name: 'Templates', icon: '🎨', count: '200+' },
+    { name: 'Videos', icon: '🎥', count: '50+' },
   ]
 
   return (
-    <div className="min-h-screen bg-dark text-white">
-      <div className="bg-darker border-b border-purple/20 sticky top-0 z-40">
+    <div className="min-h-screen bg-gradient-to-b from-dark via-darker to-dark text-white">
+      {/* Navigation */}
+      <nav className="sticky top-0 z-50 backdrop-blur-md bg-dark/80 border-b border-purple/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <div className="text-2xl font-bold">
+            <span className="text-cyan">AI</span> Mastery
+          </div>
+          <div className="flex gap-4">
+            <Link href="/profile" className="hover:text-cyan transition">
+              Profile
+            </Link>
+            <button className="text-red-400 hover:text-red-300">Logout</button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Welcome Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <h1 className="text-4xl font-bold mb-2">Welcome back! 👋</h1>
+        <p className="text-gray-400">You have full access to all content below</p>
+      </section>
+
+      {/* Content Categories */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+          {contentCategories.map((cat) => (
+            <Link
+              key={cat.name}
+              href={`/library?type=${cat.name.toLowerCase()}`}
+              className="bg-darker border border-purple/20 hover:border-cyan/50 rounded-lg p-6 text-center transition"
+            >
+              <div className="text-4xl mb-3">{cat.icon}</div>
+              <h3 className="font-bold mb-1">{cat.name}</h3>
+              <p className="text-cyan text-sm">{cat.count}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Tabs */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex gap-4 border-b border-purple/20 mb-8">
+          <button
+            onClick={() => setActiveTab('library')}
+            className={`pb-4 font-semibold ${activeTab === 'library' ? 'border-b-2 border-cyan text-cyan' : 'text-gray-400'}`}
+          >
+            📚 Content Library
+          </button>
+          <button
+            onClick={() => setActiveTab('courses')}
+            className={`pb-4 font-semibold ${activeTab === 'courses' ? 'border-b-2 border-cyan text-cyan' : 'text-gray-400'}`}
+          >
+            🎓 Courses
+          </button>
+          <button
+            onClick={() => setActiveTab('community')}
+            className={`pb-4 font-semibold ${activeTab === 'community' ? 'border-b-2 border-cyan text-cyan' : 'text-gray-400'}`}
+          >
+            💬 Community
+          </button>
+        </div>
+
+        {activeTab === 'library' && (
           <div>
-            <h1 className="text-2xl font-bold">Welcome back! 👋</h1>
-            <p className="text-gray-400">Your Pro membership is active</p>
-          </div>
-          <Link href="/login" className="bg-purple hover:bg-purple-dark px-4 py-2 rounded-lg transition">
-            Logout
-          </Link>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-12">
-          <div className="bg-darker border border-purple/20 rounded-lg p-6">
-            <div className="text-gray-400 text-sm">Total Tips Read</div>
-            <div className="text-3xl font-bold mt-2">42</div>
-          </div>
-          <div className="bg-darker border border-purple/20 rounded-lg p-6">
-            <div className="text-gray-400 text-sm">Prompts Saved</div>
-            <div className="text-3xl font-bold mt-2">18</div>
-          </div>
-          <div className="bg-darker border border-purple/20 rounded-lg p-6">
-            <div className="text-gray-400 text-sm">Templates Used</div>
-            <div className="text-3xl font-bold mt-2">7</div>
-          </div>
-          <div className="bg-darker border border-purple/20 rounded-lg p-6">
-            <div className="text-gray-400 text-sm">Learning Streak</div>
-            <div className="text-3xl font-bold mt-2">12 days 🔥</div>
-          </div>
-        </div>
-
-        <div className="mb-8">
-          <div className="flex gap-4 border-b border-purple/20 mb-8">
-            {['tips', 'prompts', 'templates'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab as 'tips' | 'prompts' | 'templates')}
-                className={`pb-4 font-semibold transition border-b-2 ${
-                  activeTab === tab
-                    ? 'text-cyan border-cyan'
-                    : 'text-gray-400 border-transparent hover:text-white'
-                }`}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          {activeTab === 'tips' && (
-            <div className="grid grid-cols-1 gap-4">
-              {tips.map((tip) => (
-                <div key={tip.id} className="bg-darker border border-purple/20 rounded-lg p-6 hover:border-cyan/50 transition">
-                  <h3 className="text-xl font-semibold mb-2">{tip.title}</h3>
-                  <div className="flex justify-between items-center">
-                    <span className="bg-purple/20 text-cyan text-xs px-3 py-1 rounded-full">{tip.category}</span>
-                    <span className="text-gray-500 text-sm">{tip.readTime} min read</span>
-                  </div>
-                </div>
-              ))}
+            <h2 className="text-2xl font-bold mb-6">📚 Content Library</h2>
+            <p className="text-gray-400 mb-6">Coming soon: 100+ tips, 500+ prompts, 200+ templates</p>
+            <div className="bg-darker border border-purple/20 rounded-lg p-8 text-center">
+              <p className="text-gray-400">Content is being loaded from our database...</p>
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        )}
+
+        {activeTab === 'courses' && (
+          <div>
+            <h2 className="text-2xl font-bold mb-6">🎓 Courses</h2>
+            <p className="text-gray-400 mb-6">Deep-dive courses to master AI</p>
+            <div className="bg-darker border border-purple/20 rounded-lg p-8 text-center">
+              <p className="text-gray-400">Courses are being prepared...</p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'community' && (
+          <div>
+            <h2 className="text-2xl font-bold mb-6">💬 Community</h2>
+            <div className="bg-darker border border-purple/20 rounded-lg p-8 text-center">
+              <p className="text-gray-400 mb-4">Join our Discord community to connect with other members!</p>
+              
+                href="https://discord.gg/your-invite-link"
+                className="inline-block bg-cyan hover:bg-cyan-dark text-dark px-6 py-2 rounded-lg font-semibold transition"
+              >
+                Join Discord
+              </a>
+            </div>
+          </div>
+        )}
+      </section>
     </div>
   )
 }
