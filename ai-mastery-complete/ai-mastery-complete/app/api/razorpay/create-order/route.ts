@@ -17,23 +17,23 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { tier, amount, currency, email, name } = body
 
-    // Validate required fields
-    if (!tier || !amount || !email) {
+    // Validate required fields (email and name are optional)
+    if (!tier || !amount) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: tier and amount' },
         { status: 400 }
       )
     }
 
     // Create Razorpay order
     const order = await razorpay.orders.create({
-      amount: amount, // in paise
-      currency: currency || 'INR',
+      amount: amount, // in cents
+      currency: currency || 'USD',
       receipt: `receipt_${Date.now()}`,
       notes: {
         tier: tier,
-        email: email,
-        name: name,
+        email: email || 'unknown@example.com',
+        name: name || 'unknown',
       },
     })
 
@@ -42,10 +42,10 @@ export async function POST(request: NextRequest) {
       .from('payments')
       .insert([
         {
-          email: email,
-          name: name,
-          amount_paid: amount / 100, // convert to rupees
-          currency: currency || 'INR',
+          email: email || 'unknown@example.com',
+          name: name || 'unknown',
+          amount_paid: amount / 100,
+          currency: currency || 'USD',
           razorpay_order_id: order.id,
           tier: tier,
           status: 'pending',
