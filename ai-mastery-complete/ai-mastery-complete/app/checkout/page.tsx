@@ -12,10 +12,10 @@ export default function CheckoutPage() {
   const [error, setError] = useState('')
 
   const TIERS = {
-    basic: { name: 'Basic', price: 3500, priceCents: 350000 },
-    pro: { name: 'Pro', price: 9900, priceCents: 990000 },
-    vip: { name: 'VIP', price: 29900, priceCents: 2990000 },
-  }
+  basic: { name: 'Basic', price: 35, priceCents: 3500, currency: 'USD' },
+  pro: { name: 'Pro', price: 99, priceCents: 9900, currency: 'USD' },
+  vip: { name: 'VIP', price: 299, priceCents: 29900, currency: 'USD' },
+}
 
   const selectedTier = TIERS[tier as keyof typeof TIERS] || TIERS.basic
 
@@ -107,10 +107,10 @@ export default function CheckoutPage() {
             <div className="bg-dark border border-purple/20 rounded-lg p-6 mb-8">
               <h2 className="text-xl font-bold mb-4">{selectedTier.name} Plan</h2>
               <div className="text-4xl font-bold mb-2">
-                ₹{selectedTier.price}
+                ${selectedTier.price}
                 <span className="text-lg text-gray-400">/month</span>
               </div>
-              <p className="text-gray-400 mb-4">Renews monthly. Cancel anytime.</p>
+              <p className="text-gray-400 mb-4">Renews monthly in USD. Cancel anytime.</p>
 
               <button
                 onClick={handlePayment}
