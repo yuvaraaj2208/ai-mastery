@@ -64,27 +64,29 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // STEP 4: Send welcome email (optional)
-    try {
-      await fetch(process.env.MAILGUN_API_URL || '', {
-        method: 'POST',
-        headers: {
-          Authorization: `Basic ${Buffer.from(
-            `api:${process.env.MAILGUN_API_KEY}`
-          ).toString('base64')}`,
-        },
-        body: new URLSearchParams({
-          from: process.env.MAILGUN_FROM_EMAIL || 'noreply@aimastery.com',
-          to: email,
-          subject: '🎉 Welcome to AI Mastery! Your 48-Hour Free Trial Starts Now',
-          text: `Hi ${name},\n\nYour 48-hour free trial has started! You have full access to:\n- 100+ AI Tips\n- 500+ Prompts\n- 200+ Templates\n\nTrial ends at: ${trialUntil.toLocaleString()}\n\nAfter your trial, choose a plan to continue.\n\nEnjoy!`,
-        }),
-      })
-    } catch (emailError) {
-      console.error('Email send failed (non-critical):', emailError)
-      // Don't fail the signup if email fails
+// STEP 4: Send welcome email (optional - don't fail if it fails)
+    if (process.env.MAILGUN_API_KEY) {
+      try {
+        await fetch(`https://api.mailgun.net/v3/${process.env.MAILGUN_DOMAIN}/messages`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Basic ${Buffer.from(
+              `api:${process.env.MAILGUN_API_KEY}`
+            ).toString('base64')}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            from: process.env.MAILGUN_FROM_EMAIL || 'noreply@aimastery.com',
+            to: email,
+            subject: '🎉 Welcome to AI Mastery! Your 48-Hour Free Trial Starts Now',
+            text: `Hi ${name},\n\nYour 48-hour free trial has started! You have full access to:\n- 100+ AI Tips\n- 500+ Prompts\n- 200+ Templates\n\nTrial ends at: ${trialUntil.toLocaleString()}\n\nAfter your trial, choose a plan to continue.\n\nEnjoy!`,
+          }).toString(),
+        })
+      } catch (emailError) {
+        console.error('Email send failed (non-critical):', emailError)
+        // Don't fail signup if email fails
+      }
     }
-
     // STEP 5: Return success
     return NextResponse.json(
       {
