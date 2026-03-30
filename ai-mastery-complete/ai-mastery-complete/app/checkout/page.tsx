@@ -26,13 +26,16 @@ export default function CheckoutPage() {
     try {
       // Call payment API
       const response = await fetch('/api/razorpay/create-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          planName: selectedTier.name,
-          amount: selectedTier.priceCents, // in paise (cents)
-        }),
-      })
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({
+tier: selectedTier.name.toLowerCase(), // 'basic', 'pro', 'vip'
+amount: selectedTier.priceCents,
+currency: 'USD',
+}),
+})
+
+
 
       const data = await response.json()
 
