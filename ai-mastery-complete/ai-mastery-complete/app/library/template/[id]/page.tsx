@@ -140,11 +140,50 @@ export default function TemplateDetailPage() {
             <h3 className="text-3xl font-bold mb-4">Ready to use this template?</h3>
             <p className="text-gray-400 mb-8">Download and customize for your needs</p>
             <button
-              onClick={() => alert('Download feature coming soon! Check back in 24 hours.')}
-              className="inline-block bg-cyan hover:bg-cyan-dark text-dark font-bold px-8 py-3 rounded-lg transition"
-            >
-              📥 Download Template
-            </button>
+  onClick={() => {
+    // Create a text file with template content
+    const content = `
+TEMPLATE: ${template.title}
+Description: ${template.description}
+Type: ${template.template_type}
+Time Saved: ${template.time_saved}
+
+---
+
+WHAT'S INCLUDED:
+${template.included_elements?.map((item: string) => `• ${item}`).join('\n') || 'N/A'}
+
+---
+
+USE CASES:
+${template.use_cases?.map((useCase: string) => `• ${useCase}`).join('\n') || 'N/A'}
+
+---
+
+CUSTOMIZATION LEVEL:
+${template.customization_level || 'Easy'}
+
+---
+
+Downloaded from AI Mastery
+${new Date().toLocaleString()}
+    `.trim()
+
+    // Create blob and download
+    const blob = new Blob([content], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${template.title.replace(/\s+/g, '-').toLowerCase()}.txt`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }}
+  className="inline-block bg-cyan hover:bg-cyan-dark text-dark font-bold px-8 py-3 rounded-lg transition"
+>
+  📥 Download Template
+</button> 
             <p className="text-sm text-gray-400 mt-4">Saves you {template.time_saved} of work</p>
           </div>
         </div>
