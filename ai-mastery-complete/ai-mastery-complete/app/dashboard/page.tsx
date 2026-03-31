@@ -25,7 +25,17 @@ return (
 <Link href="/profile" className="hover:text-cyan transition">
 Profile
 </Link>
-<button className="text-red-400 hover:text-red-300">Logout</button>
+<button
+  onClick={() => {
+    localStorage.removeItem('userToken')
+    localStorage.removeItem('userEmail')
+    localStorage.removeItem('userName')
+    window.location.href = '/login'
+  }}
+  className="text-red-400 hover:text-red-300"
+>
+  Logout
+</button>
 </div>
 </div>
 </nav>
