@@ -10,11 +10,11 @@ export default function CheckoutPage() {
   const tier = searchParams?.get('tier') || 'basic'
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-
-  const TIERS = {
-  basic: { name: 'Basic', price: 35, priceCents: 3500, currency: 'USD' },
-  pro: { name: 'Pro', price: 99, priceCents: 9900, currency: 'USD' },
-  vip: { name: 'VIP', price: 299, priceCents: 29900, currency: 'USD' },
+  
+const TIERS = {
+  basic: { name: 'Basic', price: 35, priceCents: 299900, currency: 'USD' },
+  pro: { name: 'Pro', price: 99, priceCents: 799900, currency: 'USD' },
+  vip: { name: 'VIP', price: 299, priceCents: 2499900, currency: 'USD' },
 }
 
   const selectedTier = TIERS[tier as keyof typeof TIERS] || TIERS.basic
