@@ -11,6 +11,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [userEmail, setUserEmail] = useState('')
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false)
 
   const TIERS = {
     basic: { name: 'Basic', price: 35, priceCents: 299900, currency: 'USD' },
@@ -21,74 +22,132 @@ export default function CheckoutPage() {
   const selectedTier = TIERS[tier as keyof typeof TIERS] || TIERS.basic
 
   useEffect(() => {
-    // Get user email from localStorage (saved during signup)
     const email = localStorage.getItem('userEmail') || 'unknown@example.com'
     setUserEmail(email)
   }, [])
 
+  // Load Razorpay script
+  useEffect(() => {
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.async = true
+    script.onload = () => {
+      console.log('✅ Razorpay script loaded successfully')
+      setRazorpayLoaded(true)
+    }
+    script.onerror = () => {
+      console.error('❌ Failed to load Razorpay script')
+      setError('Failed to load payment gateway. Please refresh the page.')
+    }
+    document.body.appendChild(script)
+  }, [])
+
   const handlePayment = async () => {
+    if (!razorpayLoaded) {
+      setError('Payment gateway is loading. Please wait a moment and try again.')
+      return
+    }
+
     setLoading(true)
     setError('')
 
+    console.log('=== PAYMENT INITIATED ===')
+    console.log('Tier:', tier)
+    console.log('Amount (paise):', selectedTier.priceCents)
+    console.log('Email:', userEmail)
+
     try {
-      // Call payment API
+      // Step 1: Create order
+      console.log('Step 1: Creating order...')
+      const createOrderBody = {
+        tier: tier,
+        amount: selectedTier.priceCents,
+        currency: 'USD',
+        email: userEmail,
+      }
+      console.log('Request body:', createOrderBody)
+
       const response = await fetch('/api/razorpay/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tier: tier,
-          amount: selectedTier.priceCents,
-          currency: 'USD',
-          email: userEmail,
-        }),
+        body: JSON.stringify(createOrderBody),
       })
 
+      console.log('Response status:', response.status)
       const data = await response.json()
+      console.log('Response data:', data)
 
       if (!response.ok) {
+        console.error('API error:', data.error)
         setError(data.error || 'Payment initiation failed')
+        setLoading(false)
         return
       }
 
-      // Razorpay script should open payment modal
+      console.log('✅ Order created. Order ID:', data.orderId)
+
+      // Step 2: Open Razorpay modal
+      console.log('Step 2: Opening Razorpay modal...')
+      console.log('Window.Razorpay exists:', !!(window as any).Razorpay)
+
       if ((window as any).Razorpay) {
+        console.log('✅ Creating Razorpay instance...')
         const razorpay = new (window as any).Razorpay({
           key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
           order_id: data.orderId,
           handler: async (response: any) => {
-            // Payment successful, verify on backend
+            console.log('✅ Payment successful! Response:', response)
+
+            // Step 3: Verify payment
+            console.log('Step 3: Verifying payment...')
+            const verifyBody = {
+              razorpay_order_id: data.orderId,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              tier: tier,
+              email: userEmail,
+            }
+
             const verifyResponse = await fetch('/api/razorpay/verify-payment', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                razorpay_order_id: data.orderId,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                tier: tier,
-                email: userEmail,
-              }),
+              body: JSON.stringify(verifyBody),
             })
 
             const verifyData = await verifyResponse.json()
+            console.log('Verify response:', verifyData)
 
             if (verifyResponse.ok) {
-              // Clear localStorage and redirect to dashboard
+              console.log('✅ Payment verified! Redirecting to dashboard...')
               localStorage.removeItem('userEmail')
               router.push('/dashboard')
             } else {
+              console.error('❌ Verification failed:', verifyData.error)
               setError(verifyData.error || 'Payment verification failed')
+              setLoading(false)
             }
+          },
+          modal: {
+            ondismiss: () => {
+              console.log('⚠️ Razorpay modal closed by user')
+              setLoading(false)
+            },
           },
           prefill: {
             email: userEmail,
           },
         })
+
+        console.log('✅ Opening Razorpay modal...')
         razorpay.open()
+      } else {
+        console.error('❌ Razorpay is not available on window')
+        setError('Razorpay payment gateway failed to load. Please refresh and try again.')
+        setLoading(false)
       }
-    } catch (err) {
-      setError('Something went wrong')
-      console.error(err)
-    } finally {
+    } catch (err: any) {
+      console.error('❌ Payment error:', err)
+      setError(err.message || 'Something went wrong')
       setLoading(false)
     }
   }
@@ -111,7 +170,14 @@ export default function CheckoutPage() {
 
             {error && (
               <div className="bg-red-500/20 border border-red-500 text-red-200 p-4 rounded-lg mb-6">
-                {error}
+                <p className="font-semibold mb-2">⚠️ Error:</p>
+                <p className="text-sm">{error}</p>
+              </div>
+            )}
+
+            {!razorpayLoaded && (
+              <div className="bg-yellow/20 border border-yellow/50 text-yellow p-4 rounded-lg mb-6">
+                <p className="text-sm">Loading payment gateway...</p>
               </div>
             )}
 
@@ -125,10 +191,10 @@ export default function CheckoutPage() {
 
               <button
                 onClick={handlePayment}
-                disabled={loading}
+                disabled={loading || !razorpayLoaded}
                 className="w-full bg-cyan hover:bg-cyan-dark text-dark font-semibold py-3 rounded-lg transition disabled:opacity-50"
               >
-                {loading ? 'Processing...' : 'Pay Now with Razorpay'}
+                {!razorpayLoaded ? 'Loading...' : loading ? 'Processing...' : 'Pay Now with Razorpay'}
               </button>
 
               <p className="text-center text-xs text-gray-500 mt-4">
