@@ -162,9 +162,9 @@ export default function LibraryPage() {
                       <p className="text-gray-400 text-sm mb-4">{template.description}</p>
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-gray-500">{template.difficulty}</span>
-                        <Link href={`/library/template/${template.id}`} className="bg-yellow hover:bg-yellow-dark text-dark px-4 py-1 rounded font-semibold text-sm">
-                          View
-                        </Link>
+                        <Link href={`/library/template/${template.id}`} className="bg-cyan hover:bg-cyan-dark text-dark px-4 py-1 rounded font-semibold text-sm">
+  View
+</Link>
                       </div>
                     </div>
                   ))
