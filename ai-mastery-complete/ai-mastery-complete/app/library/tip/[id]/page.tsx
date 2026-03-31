@@ -1,0 +1,169 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
+import Link from 'next/link'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
+export default function TipDetailPage() {
+  const params = useParams()
+  const id = params.id as string
+  const [tip, setTip] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    const fetchTip = async () => {
+      try {
+        // Fetch the tip content
+        const { data: tipData, error: tipError } = await supabase
+          .from('content_items')
+          .select('*')
+          .eq('id', id)
+          .single()
+
+        if (tipError) throw tipError
+
+        // Fetch the detailed tip content
+        const { data: detailData, error: detailError } = await supabase
+          .from('tips_content')
+          .select('*')
+          .eq('content_id', id)
+          .single()
+
+        if (detailError) throw detailError
+
+        setTip({ ...tipData, ...detailData })
+      } catch (err) {
+        setError('Failed to load tip')
+        console.error(err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (id) fetchTip()
+  }, [id])
+
+  if (loading) return <div className="min-h-screen bg-dark text-white flex items-center justify-center">Loading...</div>
+  if (error) return <div className="min-h-screen bg-dark text-white flex items-center justify-center text-red-400">{error}</div>
+  if (!tip) return <div className="min-h-screen bg-dark text-white flex items-center justify-center">Tip not found</div>
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-dark via-darker to-dark text-white">
+      {/* Navigation */}
+      <nav className="sticky top-0 z-50 backdrop-blur-md bg-dark/80 border-b border-purple/20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <Link href="/library" className="text-cyan hover:text-cyan-dark">
+            ← Back to Library
+          </Link>
+          <div className="text-sm text-gray-400">{tip.reading_time}</div>
+        </div>
+      </nav>
+
+      {/* Content */}
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Header */}
+        <div className="mb-12">
+          <div className="inline-block bg-cyan/20 text-cyan px-4 py-2 rounded-lg mb-4 text-sm">
+            {tip.title}
+          </div>
+          <h1 className="text-5xl font-bold mb-4">{tip.title}</h1>
+          <p className="text-xl text-gray-400 mb-6">{tip.description}</p>
+          <div className="flex gap-4">
+            <span className="bg-purple/20 text-purple px-3 py-1 rounded text-sm">
+              {tip.difficulty}
+            </span>
+            <span className="bg-cyan/20 text-cyan px-3 py-1 rounded text-sm">
+              {tip.tier_required}
+            </span>
+          </div>
+        </div>
+
+        {/* Hook */}
+        <div className="bg-darker border-l-4 border-cyan p-6 mb-8 rounded">
+          <h2 className="text-lg font-bold mb-2">🎯 The Hook</h2>
+          <p className="text-lg text-gray-200">{tip.hook}</p>
+        </div>
+
+        {/* Key Insight */}
+        <div className="bg-darker border-l-4 border-purple p-6 mb-8 rounded">
+          <h2 className="text-lg font-bold mb-2">💡 Key Insight</h2>
+          <p className="text-lg text-gray-200">{tip.key_insight}</p>
+        </div>
+
+        {/* Full Text */}
+        <div className="bg-darker border border-purple/20 p-8 mb-8 rounded-lg">
+          <h2 className="text-2xl font-bold mb-4">📖 Full Content</h2>
+          <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">{tip.full_text}</p>
+        </div>
+
+        {/* Steps */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-4">🎯 Steps</h2>
+          <div className="space-y-4">
+            {tip.step_1 && (
+              <div className="bg-darker border border-purple/20 p-4 rounded-lg">
+                <h3 className="font-bold text-cyan mb-2">Step 1</h3>
+                <p className="text-gray-300">{tip.step_1}</p>
+              </div>
+            )}
+            {tip.step_2 && (
+              <div className="bg-darker border border-purple/20 p-4 rounded-lg">
+                <h3 className="font-bold text-cyan mb-2">Step 2</h3>
+                <p className="text-gray-300">{tip.step_2}</p>
+              </div>
+            )}
+            {tip.step_3 && (
+              <div className="bg-darker border border-purple/20 p-4 rounded-lg">
+                <h3 className="font-bold text-cyan mb-2">Step 3</h3>
+                <p className="text-gray-300">{tip.step_3}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Example */}
+        {tip.example_text && (
+          <div className="bg-darker border border-purple/20 p-8 mb-8 rounded-lg">
+            <h2 className="text-2xl font-bold mb-4">📋 Example</h2>
+            <p className="text-gray-300 font-mono whitespace-pre-wrap">{tip.example_text}</p>
+          </div>
+        )}
+
+        {/* Tools */}
+        {tip.tools_mentioned && tip.tools_mentioned.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">🛠️ Tools Mentioned</h2>
+            <div className="flex flex-wrap gap-2">
+              {tip.tools_mentioned.map((tool: string) => (
+                <span key={tool} className="bg-cyan/20 text-cyan px-4 py-2 rounded-lg">
+                  {tool}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* CTA */}
+        <div className="bg-gradient-to-r from-cyan to-purple p-1 rounded-lg">
+          <div className="bg-dark p-8 rounded-lg text-center">
+            <h3 className="text-2xl font-bold mb-4">Ready to apply this?</h3>
+            <p className="text-gray-400 mb-6">Start implementing today and see results in 24 hours.</p>
+            <Link
+              href="/library"
+              className="inline-block bg-cyan hover:bg-cyan-dark text-dark font-bold px-8 py-3 rounded-lg transition"
+            >
+              Explore More Tips
+            </Link>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
