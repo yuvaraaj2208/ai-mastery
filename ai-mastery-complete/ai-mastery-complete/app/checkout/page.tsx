@@ -10,14 +10,21 @@ export default function CheckoutPage() {
   const tier = searchParams?.get('tier') || 'basic'
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  
-const TIERS = {
-  basic: { name: 'Basic', price: 35, priceCents: 299900, currency: 'USD' },
-  pro: { name: 'Pro', price: 99, priceCents: 799900, currency: 'USD' },
-  vip: { name: 'VIP', price: 299, priceCents: 2499900, currency: 'USD' },
-}
+  const [userEmail, setUserEmail] = useState('')
+
+  const TIERS = {
+    basic: { name: 'Basic', price: 35, priceCents: 299900, currency: 'USD' },
+    pro: { name: 'Pro', price: 99, priceCents: 799900, currency: 'USD' },
+    vip: { name: 'VIP', price: 299, priceCents: 2499900, currency: 'USD' },
+  }
 
   const selectedTier = TIERS[tier as keyof typeof TIERS] || TIERS.basic
+
+  useEffect(() => {
+    // Get user email from localStorage (saved during signup)
+    const email = localStorage.getItem('userEmail') || 'unknown@example.com'
+    setUserEmail(email)
+  }, [])
 
   const handlePayment = async () => {
     setLoading(true)
@@ -26,16 +33,15 @@ const TIERS = {
     try {
       // Call payment API
       const response = await fetch('/api/razorpay/create-order', {
-method: 'POST',
-headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({
-tier: selectedTier.name.toLowerCase(), // 'basic', 'pro', 'vip'
-amount: selectedTier.priceCents,
-currency: 'USD',
-}),
-})
-
-
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tier: tier,
+          amount: selectedTier.priceCents,
+          currency: 'USD',
+          email: userEmail,
+        }),
+      })
 
       const data = await response.json()
 
@@ -55,24 +61,26 @@ currency: 'USD',
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                orderId: data.orderId,
-                paymentId: response.razorpay_payment_id,
-                signature: response.razorpay_signature,
+                razorpay_order_id: data.orderId,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                tier: tier,
+                email: userEmail,
               }),
             })
 
             const verifyData = await verifyResponse.json()
 
             if (verifyResponse.ok) {
-              // Redirect to dashboard
+              // Clear localStorage and redirect to dashboard
+              localStorage.removeItem('userEmail')
               router.push('/dashboard')
             } else {
-              setError('Payment verification failed')
+              setError(verifyData.error || 'Payment verification failed')
             }
           },
           prefill: {
-            name: 'Customer Name',
-            email: 'customer@example.com',
+            email: userEmail,
           },
         })
         razorpay.open()
