@@ -1,69 +1,128 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
+  const router = useRouter()
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.error || 'Login failed')
+        return
+      }
+
+      // Save session
+      localStorage.setItem('userToken', data.session.access_token)
+      localStorage.setItem('userEmail', data.user.email)
+      localStorage.setItem('userName', data.user.name)
+
+      // Redirect to dashboard
+      router.push('/dashboard')
+    } catch (err) {
+      setError('Something went wrong. Please try again.')
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-dark via-darker to-dark flex items-center justify-center py-12 px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">
+    <div className="min-h-screen bg-gradient-to-b from-dark via-darker to-dark text-white">
+      {/* Navigation */}
+      <nav className="sticky top-0 z-50 backdrop-blur-md bg-dark/80 border-b border-purple/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <div className="text-2xl font-bold">
             <span className="text-cyan">AI</span> Mastery
-          </h1>
-          <p className="text-gray-400">Welcome back to your AI learning journey</p>
+          </div>
+          <Link href="/signup" className="hover:text-cyan transition">
+            Don't have an account? Sign up
+          </Link>
         </div>
+      </nav>
 
-        <div className="bg-darker/80 backdrop-blur-xl border border-purple/30 rounded-2xl p-8 shadow-2xl">
-          <form className="space-y-5">
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-300">Email Address</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full px-4 py-3 bg-dark border border-purple/30 rounded-lg focus:border-cyan focus:outline-none transition"
-              />
-            </div>
+      {/* Login Form */}
+      <section className="min-h-screen flex items-center justify-center px-4 py-20">
+        <div className="w-full max-w-md">
+          <div className="bg-darker border border-purple/20 rounded-lg p-8">
+            <h1 className="text-3xl font-bold mb-2">Welcome Back</h1>
+            <p className="text-gray-400 mb-8">Login to access your content library</p>
 
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-300">Password</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-4 py-3 bg-dark border border-purple/30 rounded-lg focus:border-cyan focus:outline-none transition"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-3.5 text-gray-400 hover:text-cyan"
-                >
-                  {showPassword ? '👁️' : '🙈'}
-                </button>
+            {error && (
+              <div className="bg-red-500/20 border border-red-500 text-red-200 p-4 rounded-lg mb-6">
+                {error}
               </div>
-            </div>
+            )}
 
-            <button className="w-full bg-gradient-to-r from-cyan to-purple hover:from-cyan-dark hover:to-purple-dark text-dark font-bold py-3 rounded-lg transition">
-              Login to Your Account
-            </button>
-          </form>
+            <form onSubmit={handleLogin} className="space-y-4">
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Email Address</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full bg-dark border border-purple/20 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:border-cyan focus:outline-none"
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
 
-          <p className="text-center mt-6 text-gray-400">
-            Don't have an account?{' '}
-            <Link href="/signup" className="text-cyan hover:underline font-semibold">
-              Sign up for free
-            </Link>
-          </p>
+              {/* Password */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Password</label>
+                <input
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full bg-dark border border-purple/20 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:border-cyan focus:outline-none"
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-cyan hover:bg-cyan-dark text-dark font-semibold py-2 rounded-lg transition disabled:opacity-50"
+              >
+                {loading ? 'Logging in...' : 'Login'}
+              </button>
+
+              <p className="text-center text-sm text-gray-400 mt-4">
+                Don't have an account?{' '}
+                <Link href="/signup" className="text-cyan hover:text-cyan-dark">
+                  Sign up here
+                </Link>
+              </p>
+            </form>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   )
 }
