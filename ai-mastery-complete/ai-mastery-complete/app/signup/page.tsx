@@ -77,6 +77,7 @@ export default function SignUpPage() {
       }
 
       // Signup successful - show pricing (they still need to pay for ongoing access)
+      localStorage.setItem('userEmail', formData.email)
       setStep('pricing')
     } catch (err) {
       setError('Something went wrong. Please try again.')
