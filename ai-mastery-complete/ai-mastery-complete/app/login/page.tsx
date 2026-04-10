@@ -3,13 +3,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  })
+  const [formData, setFormData] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -19,28 +17,16 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-        }),
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        setError(data.error || 'Login failed')
+      if (authError || !data.session) {
+        setError(authError?.message || 'Login failed. Please check your credentials.')
         return
       }
 
-      // Save session
-      localStorage.setItem('userToken', data.session.access_token)
-      localStorage.setItem('userEmail', data.user.email)
-      localStorage.setItem('userName', data.user.name)
-
-      // Redirect to dashboard
       router.push('/dashboard')
     } catch (err) {
       setError('Something went wrong. Please try again.')
@@ -52,19 +38,17 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-dark via-darker to-dark text-white">
-      {/* Navigation */}
       <nav className="sticky top-0 z-50 backdrop-blur-md bg-dark/80 border-b border-purple/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="text-2xl font-bold">
             <span className="text-cyan">AI</span> Mastery
           </div>
           <Link href="/signup" className="hover:text-cyan transition">
-            Don't have an account? Sign up
+            Don&apos;t have an account? Sign up
           </Link>
         </div>
       </nav>
 
-      {/* Login Form */}
       <section className="min-h-screen flex items-center justify-center px-4 py-20">
         <div className="w-full max-w-md">
           <div className="bg-darker border border-purple/20 rounded-lg p-8">
@@ -78,7 +62,6 @@ export default function LoginPage() {
             )}
 
             <form onSubmit={handleLogin} className="space-y-4">
-              {/* Email */}
               <div>
                 <label className="block text-sm font-medium mb-2">Email Address</label>
                 <input
@@ -91,7 +74,6 @@ export default function LoginPage() {
                 />
               </div>
 
-              {/* Password */}
               <div>
                 <label className="block text-sm font-medium mb-2">Password</label>
                 <input
@@ -104,7 +86,6 @@ export default function LoginPage() {
                 />
               </div>
 
-              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={loading}
@@ -114,7 +95,7 @@ export default function LoginPage() {
               </button>
 
               <p className="text-center text-sm text-gray-400 mt-4">
-                Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
                 <Link href="/signup" className="text-cyan hover:text-cyan-dark">
                   Sign up here
                 </Link>
