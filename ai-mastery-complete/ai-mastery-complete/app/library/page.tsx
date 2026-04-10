@@ -1,8 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createClient } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 type ContentItem = {
   id: string
@@ -14,7 +19,6 @@ type ContentItem = {
   tags: string[]
   rating: number
   view_count: number
-  category_id: string
 }
 
 type UserProfile = {
@@ -24,7 +28,6 @@ type UserProfile = {
   tier: string
 }
 
-// Tier hierarchy — higher tier can see lower tier content
 const TIER_ACCESS: Record<string, string[]> = {
   basic: ['basic'],
   pro:   ['basic', 'pro'],
@@ -50,9 +53,7 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 }
 
 export default function LibraryPage() {
-  const supabase = createClientComponentClient()
   const router = useRouter()
-
   const [user, setUser] = useState<UserProfile | null>(null)
   const [items, setItems] = useState<ContentItem[]>([])
   const [filtered, setFiltered] = useState<ContentItem[]>([])
@@ -63,7 +64,6 @@ export default function LibraryPage() {
   const [page, setPage] = useState(1)
   const PER_PAGE = 60
 
-  /* ── 1. Auth + user profile ─────────────────────── */
   useEffect(() => {
     async function load() {
       const { data: { session } } = await supabase.auth.getSession()
@@ -82,32 +82,26 @@ export default function LibraryPage() {
       }
 
       setUser(profile)
-      await fetchContent(profile.tier)
+
+      const allowedTiers = TIER_ACCESS[profile.tier] ?? ['basic']
+      const { data, error: fetchErr } = await supabase
+        .from('content_items')
+        .select('id, content_type, title, description, difficulty, tier_required, tags, rating, view_count')
+        .eq('content_status', 'published')
+        .in('tier_required', allowedTiers)
+        .order('created_at', { ascending: false })
+
+      if (fetchErr) {
+        setError('Failed to load content: ' + fetchErr.message)
+      } else {
+        setItems(data ?? [])
+        setFiltered(data ?? [])
+      }
+      setLoading(false)
     }
     load()
   }, [])
 
-  /* ── 2. Fetch content filtered by tier ──────────── */
-  async function fetchContent(tier: string) {
-    const allowedTiers = TIER_ACCESS[tier] ?? ['basic']
-
-    const { data, error: fetchErr } = await supabase
-      .from('content_items')
-      .select('id, content_type, title, description, difficulty, tier_required, tags, rating, view_count, category_id')
-      .eq('content_status', 'published')
-      .in('tier_required', allowedTiers)
-      .order('created_at', { ascending: false })
-
-    if (fetchErr) {
-      setError('Failed to load content: ' + fetchErr.message)
-    } else {
-      setItems(data ?? [])
-      setFiltered(data ?? [])
-    }
-    setLoading(false)
-  }
-
-  /* ── 3. Filter on type / search change ──────────── */
   useEffect(() => {
     let result = items
     if (activeType !== 'all') result = result.filter(i => i.content_type === activeType)
@@ -123,7 +117,6 @@ export default function LibraryPage() {
     setPage(1)
   }, [activeType, search, items])
 
-  /* ── helpers ─────────────────────────────────────── */
   const counts = {
     all:      items.length,
     tip:      items.filter(i => i.content_type === 'tip').length,
@@ -134,11 +127,6 @@ export default function LibraryPage() {
   const visible = filtered.slice(0, page * PER_PAGE)
   const hasMore = visible.length < filtered.length
 
-  function viewItem(item: ContentItem) {
-    router.push(`/library/${item.content_type}/${item.id}`)
-  }
-
-  /* ── render ──────────────────────────────────────── */
   if (loading) return (
     <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
       <div className="text-center">
@@ -152,14 +140,13 @@ export default function LibraryPage() {
     <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
       <div className="bg-red-900/30 border border-red-500/40 rounded-xl p-8 max-w-md text-center">
         <p className="text-red-400 mb-4">{error}</p>
-        <button onClick={() => router.push('/dashboard')} className="text-sm text-gray-400 hover:text-white underline">← Back to dashboard</button>
+        <button onClick={() => router.push('/dashboard')} className="text-sm text-gray-400 hover:text-white underline">Back to dashboard</button>
       </div>
     </div>
   )
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
-      {/* TOP BAR */}
       <div className="sticky top-0 z-40 bg-[#0a0a0f]/90 backdrop-blur border-b border-white/5 px-6 py-4 flex items-center justify-between">
         <h1 className="text-lg font-semibold tracking-tight">Content Library</h1>
         <div className="flex items-center gap-3">
@@ -179,7 +166,6 @@ export default function LibraryPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-6">
-        {/* TIER INFO BANNER */}
         {user && user.tier !== 'vip' && (
           <div className="mb-6 bg-purple-900/20 border border-purple-500/30 rounded-xl px-5 py-3 flex items-center justify-between">
             <p className="text-sm text-purple-300">
@@ -190,12 +176,11 @@ export default function LibraryPage() {
               onClick={() => router.push('/pricing')}
               className="text-xs bg-purple-600 hover:bg-purple-500 px-3 py-1.5 rounded-lg font-medium transition"
             >
-              Upgrade →
+              Upgrade
             </button>
           </div>
         )}
 
-        {/* TAB FILTERS */}
         <div className="flex gap-2 mb-6 flex-wrap">
           {(['all', 'tip', 'prompt', 'template'] as const).map(t => (
             <button
@@ -213,13 +198,11 @@ export default function LibraryPage() {
           ))}
         </div>
 
-        {/* RESULTS COUNT */}
         <p className="text-xs text-gray-500 mb-4">
           Showing {visible.length} of {filtered.length} items
           {search && ` matching "${search}"`}
         </p>
 
-        {/* GRID */}
         {filtered.length === 0 ? (
           <div className="text-center py-20 text-gray-500">
             <p className="text-4xl mb-3">🔍</p>
@@ -233,7 +216,6 @@ export default function LibraryPage() {
                   key={item.id}
                   className="bg-white/3 border border-white/8 rounded-xl p-5 flex flex-col gap-3 hover:border-purple-500/40 transition group"
                 >
-                  {/* HEADER ROW */}
                   <div className="flex items-start justify-between gap-2">
                     <span className="text-xl">{TYPE_ICONS[item.content_type]}</span>
                     <div className="flex gap-1.5 flex-wrap justify-end">
@@ -246,17 +228,14 @@ export default function LibraryPage() {
                     </div>
                   </div>
 
-                  {/* TITLE */}
                   <h3 className="text-sm font-semibold leading-snug text-white/90 line-clamp-2">
                     {item.title}
                   </h3>
 
-                  {/* DESCRIPTION */}
                   <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">
                     {item.description}
                   </p>
 
-                  {/* TAGS */}
                   {item.tags?.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {item.tags.slice(0, 3).map(tag => (
@@ -267,14 +246,13 @@ export default function LibraryPage() {
                     </div>
                   )}
 
-                  {/* FOOTER */}
                   <div className="flex items-center justify-between mt-auto pt-2">
                     <span className="text-xs text-gray-500">⭐ {item.rating} · {item.view_count} views</span>
                     <button
-                      onClick={() => viewItem(item)}
+                      onClick={() => router.push(`/library/${item.content_type}/${item.id}`)}
                       className="text-xs bg-purple-600/80 hover:bg-purple-500 px-3 py-1.5 rounded-lg font-medium transition group-hover:bg-purple-500"
                     >
-                      View →
+                      View
                     </button>
                   </div>
                 </div>
