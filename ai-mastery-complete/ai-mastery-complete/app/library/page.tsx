@@ -64,8 +64,11 @@ export default function LibraryPage() {
   useEffect(() => {
     async function load() {
       const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { router.push('/login'); return }
-
+if (!session) {
+  // try refreshing first before redirecting
+  const { data: refreshed } = await supabase.auth.refreshSession()
+  if (!refreshed.session) { router.push('/login'); return }
+}
       const { data: profile, error: profileErr } = await supabase
         .from('users')
         .select('id, email, full_name, tier')
