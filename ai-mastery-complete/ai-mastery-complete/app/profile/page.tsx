@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -10,83 +10,101 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const email = localStorage.getItem('userEmail')
-    const name = localStorage.getItem('userName')
-    
-    if (!email) {
-      router.push('/login')
-      return
+    async function load() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { router.push('/login'); return }
+
+      const { data } = await supabase
+        .from('users')
+        .select('id, email, name, tier, subscription_status, created_at')
+        .eq('id', session.user.id)
+        .single()
+
+      if (data) setUser(data)
+      setLoading(false)
     }
+    load()
+  }, [])
 
-    setUser({
-      email,
-      name,
-    })
-    setLoading(false)
-  }, [router])
-
-  const handleLogout = () => {
-    localStorage.removeItem('userToken')
-    localStorage.removeItem('userEmail')
-    localStorage.removeItem('userName')
+  async function handleLogout() {
+    await supabase.auth.signOut()
     router.push('/login')
   }
 
-  if (loading) {
-    return <div className="min-h-screen bg-dark text-white flex items-center justify-center">Loading...</div>
+  const TIER_STYLES: Record<string, { bg: string; text: string; icon: string }> = {
+    basic: { bg: 'bg-slate-700', text: 'text-slate-200', icon: '🔵' },
+    pro:   { bg: 'bg-blue-800',  text: 'text-blue-200',  icon: '⚡' },
+    vip:   { bg: 'bg-yellow-800',text: 'text-yellow-200',icon: '👑' },
   }
+  const tierStyle = TIER_STYLES[user?.tier] ?? TIER_STYLES.basic
+
+  if (loading) return (
+    <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+      <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+    </div>
+  )
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-dark via-darker to-dark text-white">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 backdrop-blur-md bg-dark/80 border-b border-purple/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold">
-            <span className="text-cyan">AI</span> Mastery
-          </Link>
-          <Link href="/dashboard" className="hover:text-cyan transition">
-            ← Back to Dashboard
-          </Link>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-[#0a0a0f] text-white">
+      <div className="max-w-2xl mx-auto px-6 py-12">
+        <h1 className="text-3xl font-bold mb-2">Your Profile</h1>
+        <p className="text-gray-400 mb-8">Manage your account settings</p>
 
-      {/* Profile Content */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold mb-4">Your Profile</h1>
-          <p className="text-gray-400">Manage your account settings</p>
-        </div>
-
-        {/* Profile Card */}
-        <div className="bg-darker border border-purple/20 rounded-lg p-8 mb-8">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-6">Account Information</h2>
-            <div className="space-y-6">
-              <div>
-                <label className="text-gray-400 text-sm">Name</label>
-                <p className="text-xl font-semibold mt-2">{user?.name || 'N/A'}</p>
-              </div>
-              <div>
-                <label className="text-gray-400 text-sm">Email</label>
-                <p className="text-xl font-semibold mt-2">{user?.email}</p>
-              </div>
+        <div className="bg-white/3 border border-white/8 rounded-xl p-8 mb-6">
+          <h2 className="text-lg font-semibold mb-6">Account Information</h2>
+          <div className="space-y-5">
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Name</p>
+              <p className="text-base font-medium">{user?.name || 'Not set'}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Email</p>
+              <p className="text-base font-medium">{user?.email}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Current Plan</p>
+              <span className={`inline-flex items-center gap-1.5 text-sm px-3 py-1 rounded-full font-semibold ${tierStyle.bg} ${tierStyle.text}`}>
+                {tierStyle.icon} {user?.tier?.toUpperCase()} Plan
+              </span>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Subscription Status</p>
+              <span className={`text-sm font-medium ${user?.subscription_status === 'active' ? 'text-green-400' : 'text-gray-400'}`}>
+                {user?.subscription_status === 'active' ? '✓ Active' : user?.subscription_status || 'Free'}
+              </span>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Member Since</p>
+              <p className="text-sm text-gray-300">
+                {user?.created_at ? new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'}
+              </p>
             </div>
           </div>
-
-          <hr className="border-purple/20 my-8" />
-
-          {/* Logout Button */}
-          <div className="mt-8">
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-lg transition"
-            >
-              Logout
-            </button>
-            <p className="text-gray-400 text-sm mt-3">You will be logged out and redirected to the login page.</p>
-          </div>
         </div>
-      </section>
+
+        {user?.tier !== 'vip' && (
+          <div className="bg-purple-900/20 border border-purple-500/30 rounded-xl px-6 py-4 mb-6 flex items-center justify-between">
+            <p className="text-sm text-purple-300">Upgrade to unlock more content</p>
+            <button
+              onClick={() => router.push('/pricing')}
+              className="text-xs bg-purple-600 hover:bg-purple-500 px-3 py-1.5 rounded-lg font-medium transition"
+            >
+              Upgrade →
+            </button>
+          </div>
+        )}
+
+        <div className="bg-white/3 border border-white/8 rounded-xl p-6">
+          <h3 className="text-sm font-semibold mb-3 text-red-400">Danger Zone</h3>
+          <button
+            onClick={handleLogout}
+            className="bg-red-600/80 hover:bg-red-600 text-white font-semibold px-5 py-2.5 rounded-lg transition text-sm"
+          >
+            Sign Out
+          </button>
+          <p className="text-gray-500 text-xs mt-2">You will be redirected to the login page.</p>
+        </div>
+      </div>
     </div>
   )
 }
