@@ -63,8 +63,8 @@ export default function TopNav() {
 
   const tier = user?.tier ?? 'basic'
   const tierStyle = TIER_STYLES[tier] ?? TIER_STYLES.basic
-  const initials = user?.full_name
-    ? user.full_name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+  const initials = user?.name
+    ? user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
     : user?.email?.slice(0, 2).toUpperCase() ?? '?'
 
   return (
@@ -119,7 +119,7 @@ export default function TopNav() {
                     {initials}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">{user?.full_name || 'Member'}</p>
+                    <p className="text-sm font-semibold text-white truncate">{user?.name || 'Member'}</p>
                     <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                   </div>
                 </div>
