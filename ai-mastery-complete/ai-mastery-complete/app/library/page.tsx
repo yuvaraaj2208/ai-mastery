@@ -250,7 +250,7 @@ if (!session) {
                     <span className="text-xs text-gray-500">⭐ {item.rating} · {item.view_count} views</span>
                     <button
                       onClick={() => router.push(`/library/${item.content_type}/${item.id}`)}
-                      className="text-xs bg-purple-600/80 hover:bg-purple-500 px-3 py-1.5 rounded-lg font-medium transition group-hover:bg-purple-500"
+                      className="text-xs bg-purple-500 hover:bg-purple-400 text-white font-semibold px-4 py-2 rounded-lg transition"
                     >
                       View
                     </button>
