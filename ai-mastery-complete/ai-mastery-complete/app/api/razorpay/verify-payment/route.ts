@@ -16,153 +16,99 @@ const razorpay = new Razorpay({
 })
 
 const mg = new mailgun(FormData)
-const client = mg.client({
-  username: 'api',
-  key: process.env.MAILGUN_API_KEY || '',
-})
+const client = mg.client({ username: 'api', key: process.env.MAILGUN_API_KEY || '' })
+
+const TIER_RANK: Record<string, number> = { basic: 1, pro: 2, vip: 3 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      tier,
-      email,
-    } = body
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, tier, userId, email } = body
 
-    // Validate required fields
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-      return NextResponse.json(
-        { success: false, error: 'Missing payment details' },
-        { status: 400 }
-      )
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !userId) {
+      return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 })
     }
 
-    // STEP 1: Verify Razorpay signature
-    const signatureBody = razorpay_order_id + '|' + razorpay_payment_id
+    // STEP 1: Verify signature
     const expectedSignature = crypto
       .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
-      .update(signatureBody)
+      .update(razorpay_order_id + '|' + razorpay_payment_id)
       .digest('hex')
 
     if (expectedSignature !== razorpay_signature) {
-      return NextResponse.json(
-        { success: false, error: 'Payment signature verification failed' },
-        { status: 400 }
-      )
+      return NextResponse.json({ success: false, error: 'Payment signature verification failed' }, { status: 400 })
     }
 
-    // STEP 2: Fetch payment details from Razorpay
+    // STEP 2: Check payment captured
     const payment = await razorpay.payments.fetch(razorpay_payment_id)
-
     if (payment.status !== 'captured') {
-      return NextResponse.json(
-        { success: false, error: 'Payment was not captured successfully' },
-        { status: 400 }
-      )
+      return NextResponse.json({ success: false, error: 'Payment not captured' }, { status: 400 })
     }
 
-    // STEP 3: Update payment status in database
-    const { data: updateData, error: updateError } = await supabase
+    // STEP 3: Check user's current tier — prevent downgrade or duplicate
+    const { data: currentUser } = await supabase
+      .from('users')
+      .select('tier')
+      .eq('id', userId)
+      .single()
+
+    if (currentUser && TIER_RANK[currentUser.tier] >= TIER_RANK[tier]) {
+      return NextResponse.json({
+        success: false,
+        error: `You already have ${currentUser.tier} plan or higher.`
+      }, { status: 400 })
+    }
+
+    // STEP 4: Update user tier by ID (not email)
+    const { error: userError } = await supabase
+      .from('users')
+      .update({
+        tier,
+        subscription_status: 'active',
+        trial_until: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', userId)
+
+    if (userError) {
+      console.error('User update error:', userError)
+      return NextResponse.json({ success: false, error: 'Failed to update user tier' }, { status: 500 })
+    }
+
+    // STEP 5: Update payment record
+    await supabase
       .from('payments')
       .update({
-        razorpay_payment_id: razorpay_payment_id,
+        razorpay_payment_id,
         status: 'completed',
         updated_at: new Date().toISOString(),
       })
       .eq('razorpay_order_id', razorpay_order_id)
-      .select()
 
-    if (updateError) {
-      console.error('Update error:', updateError)
-      return NextResponse.json(
-        { success: false, error: 'Failed to update payment status' },
-        { status: 500 }
-      )
-    }
-
-    // STEP 4: Update user tier from 'trial' to paid tier
-    const { data: userUpdate, error: userError } = await supabase
-      .from('users')
-      .update({
-        tier: tier, // 'basic', 'pro', or 'vip'
-        subscription_status: 'active',
-        trial_until: null, // Clear trial date since they paid
-        updated_at: new Date().toISOString(),
-      })
-      .eq('email', email)
-      .select()
-
-    if (userError) {
-      console.error('User update error:', userError)
-      // Don't fail, continue
-    }
-
-    // STEP 5: Send confirmation email
+    // STEP 6: Send confirmation email
     try {
       await client.messages.create(process.env.MAILGUN_DOMAIN!, {
         from: process.env.MAILGUN_FROM_EMAIL!,
         to: email,
-        subject: `🎉 Welcome to AI Mastery ${tier.toUpperCase()} - Payment Confirmed!`,
+        subject: `🎉 Welcome to AI Mastery ${tier.toUpperCase()}!`,
         html: `
           <div style="font-family: Arial, sans-serif; color: #333;">
             <h2 style="color: #06B6D4;">Payment Confirmed! 🎉</h2>
-            <p>Hi there,</p>
-            <p>Thank you for subscribing to <strong>AI Mastery ${tier.toUpperCase()}</strong>!</p>
-            
-            <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-              <p><strong>Payment Details:</strong></p>
-              <ul>
-                <li><strong>Plan:</strong> ${tier.toUpperCase()}</li>
-                <li><strong>Amount:</strong> ₹${Number(payment.amount) / 100}</li>
-                <li><strong>Payment ID:</strong> ${razorpay_payment_id}</li>
-                <li><strong>Status:</strong> Completed ✅</li>
-              </ul>
-            </div>
-            
-            <p>Your subscription is now <strong>ACTIVE</strong>. Access all premium content immediately!</p>
-            
-            <p>
-              <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" 
-                 style="background-color: #06B6D4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                Go to Dashboard
-              </a>
-            </p>
-            
-            <p style="margin-top: 30px; color: #666; font-size: 12px;">
-              Questions? Email us at support@aimastery.com<br>
-              Best regards,<br>
-              <strong>The AI Mastery Team</strong>
-            </p>
+            <p>Thank you for upgrading to <strong>AI Mastery ${tier.toUpperCase()}</strong>!</p>
+            <p><strong>Payment ID:</strong> ${razorpay_payment_id}</p>
+            <p><strong>Amount:</strong> ${Number(payment.amount) / 100} ${payment.currency}</p>
+            <p>Your subscription is now active. <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard">Go to Dashboard</a></p>
           </div>
         `,
       })
     } catch (emailError) {
-      console.error('Email sending error:', emailError)
-      // Don't fail the payment if email fails
+      console.error('Email error:', emailError)
     }
 
-    // STEP 6: Return success
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Payment verified successfully',
-        orderId: razorpay_order_id,
-        paymentId: razorpay_payment_id,
-        tier: tier,
-      },
-      { status: 200 }
-    )
+    return NextResponse.json({ success: true, tier }, { status: 200 })
+
   } catch (error) {
     console.error('Verification error:', error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Payment verification failed: ' + (error as Error).message,
-      },
-      { status: 500 }
-    )
+    return NextResponse.json({ success: false, error: 'Payment verification failed' }, { status: 500 })
   }
 }
