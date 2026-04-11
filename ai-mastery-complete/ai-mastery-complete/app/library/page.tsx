@@ -21,7 +21,7 @@ type ContentItem = {
 type UserProfile = {
   id: string
   email: string
-  full_name: string
+  name: string
   tier: string
 }
 
@@ -71,7 +71,7 @@ if (!session) {
 }
       const { data: profile, error: profileErr } = await supabase
         .from('users')
-        .select('id, email, full_name, tier')
+        .select('id, email, name, tier')
         .eq('id', session.user.id)
         .single()
 
