@@ -144,20 +144,20 @@ if (!session) {
       </div>
     </div>
   )
-
-  return (
+return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
-      <div className="flex items-center justify-between mb-6">
-  <h1 className="text-xl font-semibold">Content Library</h1>
-  <input
-    type="text"
-    placeholder="Search…"
-    value={search}
-    onChange={e => setSearch(e.target.value)}
-    className="bg-white/5 border border-white/10 rounded-lg px-4 py-1.5 text-sm w-52 focus:outline-none focus:border-purple-500 placeholder-gray-500"
-  />
-</div>
       <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-xl font-semibold">Content Library</h1>
+          <input
+            type="text"
+            placeholder="Search…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="bg-white/5 border border-white/10 rounded-lg px-4 py-1.5 text-sm w-52 focus:outline-none focus:border-purple-500 placeholder-gray-500"
+          />
+        </div>
+  
         {user && user.tier !== 'vip' && (
           <div className="mb-6 bg-purple-900/20 border border-purple-500/30 rounded-xl px-5 py-3 flex items-center justify-between">
             <p className="text-sm text-purple-300">
