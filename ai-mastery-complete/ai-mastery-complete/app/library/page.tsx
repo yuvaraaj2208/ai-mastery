@@ -147,24 +147,16 @@ if (!session) {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
-      <div className="sticky top-0 z-40 bg-[#0a0a0f]/90 backdrop-blur border-b border-white/5 px-6 py-4 flex items-center justify-between">
-        <h1 className="text-lg font-semibold tracking-tight">Content Library</h1>
-        <div className="flex items-center gap-3">
-          {user && (
-            <span className={`text-xs px-2.5 py-1 rounded-full font-semibold uppercase tracking-wider ${TIER_COLORS[user.tier] ?? 'bg-gray-700 text-gray-300'}`}>
-              {user.tier}
-            </span>
-          )}
-          <input
-            type="text"
-            placeholder="Search…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-lg px-4 py-1.5 text-sm w-52 focus:outline-none focus:border-purple-500 placeholder-gray-500"
-          />
-        </div>
-      </div>
-
+      <div className="flex items-center justify-between mb-6">
+  <h1 className="text-xl font-semibold">Content Library</h1>
+  <input
+    type="text"
+    placeholder="Search…"
+    value={search}
+    onChange={e => setSearch(e.target.value)}
+    className="bg-white/5 border border-white/10 rounded-lg px-4 py-1.5 text-sm w-52 focus:outline-none focus:border-purple-500 placeholder-gray-500"
+  />
+</div>
       <div className="max-w-7xl mx-auto px-6 py-6">
         {user && user.tier !== 'vip' && (
           <div className="mb-6 bg-purple-900/20 border border-purple-500/30 rounded-xl px-5 py-3 flex items-center justify-between">
