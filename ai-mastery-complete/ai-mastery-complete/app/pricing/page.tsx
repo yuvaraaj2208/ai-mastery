@@ -57,7 +57,7 @@ export default function PricingPage() {
   }
 
   return (
-<div className="min-h-screen bg-gradient-to-b from-dark via-darker to-dark text-white">
+    <div className="min-h-screen bg-gradient-to-b from-dark via-darker to-dark text-white">
 
       <div className="px-6 py-4 flex items-center justify-between border-b border-white/5">
         <span className="font-bold text-lg">
