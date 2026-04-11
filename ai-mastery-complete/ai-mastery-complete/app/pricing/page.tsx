@@ -69,7 +69,7 @@ export default function PricingPage() {
         </div>
       </div>
 
-      <section className="py-20
+    
       <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <h1 className="text-4xl font-bold text-center mb-4">Simple, Transparent Pricing</h1>
         <p className="text-center text-gray-400 mb-16">Choose the plan that&apos;s right for you</p>
