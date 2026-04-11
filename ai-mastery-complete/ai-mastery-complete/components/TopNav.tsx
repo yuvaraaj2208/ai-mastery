@@ -9,7 +9,7 @@ import Link from 'next/link'
 type UserProfile = {
   id: string
   email: string
-  full_name: string
+  name: string
   tier: string
 }
 
@@ -38,7 +38,7 @@ export default function TopNav() {
       if (!session) return
       const { data } = await supabase
         .from('users')
-        .select('id, email, full_name, tier')
+        .select('id, email, name, tier')
         .eq('id', session.user.id)
         .single()
       if (data) setUser(data)
