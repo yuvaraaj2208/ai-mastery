@@ -57,8 +57,19 @@ export default function PricingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-dark via-darker to-dark text-white">
+<div className="min-h-screen bg-gradient-to-b from-dark via-darker to-dark text-white">
 
+      <div className="px-6 py-4 flex items-center justify-between border-b border-white/5">
+        <span className="font-bold text-lg">
+          <span className="text-purple-400">AI</span> Mastery
+        </span>
+        <div className="flex gap-4 text-sm">
+          <a href="/dashboard" className="text-gray-400 hover:text-white transition">Dashboard</a>
+          <a href="/login" className="text-gray-400 hover:text-white transition">Login</a>
+        </div>
+      </div>
+
+      <section className="py-20
       <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <h1 className="text-4xl font-bold text-center mb-4">Simple, Transparent Pricing</h1>
         <p className="text-center text-gray-400 mb-16">Choose the plan that&apos;s right for you</p>
