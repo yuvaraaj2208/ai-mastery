@@ -1,4 +1,4 @@
-import TopNav from '@/components/TopNav'
+import NavWrapper from '@/components/NavWrapper'
 import { Metadata } from 'next'
 import './globals.css'
 
@@ -20,7 +20,7 @@ export default function RootLayout({
      <script src="https://checkout.razorpay.com/v1/checkout.js"></script> </head>
       <body className="bg-dark text-white dark">
         <div className="min-h-screen flex flex-col">
-          <TopNav />
+          <NavWrapper />
           {children}
         </div>
       </body>
